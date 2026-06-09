@@ -22,6 +22,7 @@ Apple's built-in dictation times out after ~30 seconds of silence. Voice Memos r
 - **On-Device Processing** — Uses Apple's on-device speech recognition when available (no data leaves your phone)
 - **Auto-Save** — Transcripts saved as timestamped Markdown files to your Documents folder
 - **Background Audio** — Keeps listening even when the screen locks
+- **Shake to Stop** — Shake your phone to end a stream, or tap the stop button
 - **Minimal UI** — Dark interface with a single large button, designed for glanceable use while moving
 
 ## How It Works
@@ -40,7 +41,10 @@ Just talk. The transcript scrolls in real time on screen. A pulsing red dot and 
 You'll see silence gaps handled gracefully — the app doesn't stop when you pause to think. It keeps listening.
 
 ### Stopping a Stream
-Tap the stop button (the red square) on screen.
+Two options:
+- **Shake your phone** — hands-free, works while running
+- **Tap the stop button** (the red square) on screen
+
 Your transcript is automatically saved to:
 ```
 Documents/ThoughtStreams/stream_2026-06-09_14-30-00.md
@@ -68,6 +72,7 @@ ContentView.swift               Minimal dark UI — transcript + record button
 SpeechRecognitionManager.swift  Core engine — audio capture, chaining, persistence
 AppIntents.swift                Siri phrases and Shortcuts integration
 SiriObserver.swift              Bridges Siri intents to speech manager
+ShakeDetector.swift             Shake-to-stop via UIWindow motion events
 ```
 
 ### Key Implementation Choices
