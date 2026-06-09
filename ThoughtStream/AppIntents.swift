@@ -1,16 +1,6 @@
 import AppIntents
 import SwiftUI
 
-/// Shared state for Siri → app communication.
-/// Solves the cold-launch race condition where a Notification fires
-/// before the SwiftUI view has subscribed.
-final class SiriLaunchState {
-    static let shared = SiriLaunchState()
-    var pendingStart = false
-    var pendingStop = false
-    private init() {}
-}
-
 // MARK: - Start Thought Stream
 
 /// Siri trigger: "Hey Siri, thought stream" or "Hey Siri, start thought stream"
@@ -21,8 +11,10 @@ struct StartThoughtStreamIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        SiriLaunchState.shared.pendingStart = true
-        NotificationCenter.default.post(name: .startRecordingFromSiri, object: nil)
+        let manager = SpeechRecognitionManager.shared
+        if !manager.isRecording {
+            await manager.start()
+        }
         return .result()
     }
 }
@@ -37,8 +29,10 @@ struct StopThoughtStreamIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        SiriLaunchState.shared.pendingStop = true
-        NotificationCenter.default.post(name: .stopRecordingFromSiri, object: nil)
+        let manager = SpeechRecognitionManager.shared
+        if manager.isRecording {
+            manager.stop()
+        }
         return .result()
     }
 }
@@ -72,9 +66,3 @@ struct ThoughtStreamShortcuts: AppShortcutsProvider {
     }
 }
 
-// MARK: - Notification Names
-
-extension Notification.Name {
-    static let startRecordingFromSiri = Notification.Name("startRecordingFromSiri")
-    static let stopRecordingFromSiri = Notification.Name("stopRecordingFromSiri")
-}

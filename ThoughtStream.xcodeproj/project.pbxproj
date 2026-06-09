@@ -10,7 +10,6 @@
 		569C2DE535C6325E5724992F /* ShakeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0816F3D24621485D7F8EA2F4 /* ShakeDetector.swift */; };
 		5CC60A13B68C305D3588FD69 /* SpeechRecognitionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DDDE97256B301ADF18F2F0 /* SpeechRecognitionManager.swift */; };
 		5DCBCF3DB76043CAC23BBBE4 /* ThoughtStreamApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2345E877A2397F74E2D4DB4C /* ThoughtStreamApp.swift */; };
-		A511BA6182B5DC09C3E8A2A9 /* SiriObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A9D22EE7E61BAF3BED8EEC1 /* SiriObserver.swift */; };
 		ABD5C8D41F7CF83689B17B2E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D4ACD56F093D88416878F12 /* ContentView.swift */; };
 		ADD9D2FC30096CACF9162AE5 /* AppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D078B2FF80C32E01703226 /* AppIntents.swift */; };
 /* End PBXBuildFile section */
@@ -21,7 +20,6 @@
 		2345E877A2397F74E2D4DB4C /* ThoughtStreamApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtStreamApp.swift; sourceTree = "<group>"; };
 		2D39395853B9FE775488843A /* ThoughtStream.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ThoughtStream.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53DDDE97256B301ADF18F2F0 /* SpeechRecognitionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionManager.swift; sourceTree = "<group>"; };
-		6A9D22EE7E61BAF3BED8EEC1 /* SiriObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriObserver.swift; sourceTree = "<group>"; };
 		81D078B2FF80C32E01703226 /* AppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntents.swift; sourceTree = "<group>"; };
 		8DDB25C4C58CB6CD2D31616A /* ThoughtStream.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThoughtStream.entitlements; sourceTree = "<group>"; };
 		B7A7877D32467420BF4A290D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -43,7 +41,6 @@
 				1D4ACD56F093D88416878F12 /* ContentView.swift */,
 				B7A7877D32467420BF4A290D /* Info.plist */,
 				0816F3D24621485D7F8EA2F4 /* ShakeDetector.swift */,
-				6A9D22EE7E61BAF3BED8EEC1 /* SiriObserver.swift */,
 				53DDDE97256B301ADF18F2F0 /* SpeechRecognitionManager.swift */,
 				8DDB25C4C58CB6CD2D31616A /* ThoughtStream.entitlements */,
 				2345E877A2397F74E2D4DB4C /* ThoughtStreamApp.swift */,
@@ -117,7 +114,6 @@
 				ADD9D2FC30096CACF9162AE5 /* AppIntents.swift in Sources */,
 				ABD5C8D41F7CF83689B17B2E /* ContentView.swift in Sources */,
 				569C2DE535C6325E5724992F /* ShakeDetector.swift in Sources */,
-				A511BA6182B5DC09C3E8A2A9 /* SiriObserver.swift in Sources */,
 				5CC60A13B68C305D3588FD69 /* SpeechRecognitionManager.swift in Sources */,
 				5DCBCF3DB76043CAC23BBBE4 /* ThoughtStreamApp.swift in Sources */,
 			);

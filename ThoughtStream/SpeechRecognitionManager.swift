@@ -8,6 +8,9 @@ import AVFoundation
 @MainActor
 final class SpeechRecognitionManager: ObservableObject {
 
+    /// Shared instance so App Intents can directly start/stop recording.
+    static let shared = SpeechRecognitionManager()
+
     // MARK: - Published State
 
     @Published var isRecording = false
