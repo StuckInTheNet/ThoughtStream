@@ -122,11 +122,12 @@ These phrases are registered automatically:
 
 | Phrase | Action |
 |--------|--------|
-| "Hey Siri, thought stream" | Opens app and starts recording |
-| "Hey Siri, start thought stream" | Opens app and starts recording |
-| "Hey Siri, stream my thoughts" | Opens app and starts recording |
-| "Hey Siri, stop thought stream" | Stops recording and saves |
-| "Hey Siri, end thought stream" | Stops recording and saves |
+| "Hey Siri, ThoughtStream" | Opens app and starts recording |
+| "Hey Siri, start ThoughtStream" | Opens app and starts recording |
+| "Hey Siri, stream with ThoughtStream" | Opens app and starts recording |
+| "Hey Siri, open ThoughtStream" | Opens app and starts recording |
+| "Hey Siri, stop ThoughtStream" | Stops recording and saves |
+| "Hey Siri, end ThoughtStream" | Stops recording and saves |
 
 You can also find and customize these in the **Shortcuts** app.
 

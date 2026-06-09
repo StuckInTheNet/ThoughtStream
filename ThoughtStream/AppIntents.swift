@@ -41,9 +41,9 @@ struct ThoughtStreamShortcuts: AppShortcutsProvider {
             intent: StartThoughtStreamIntent(),
             phrases: [
                 "Start \(.applicationName)",
-                "Start thought stream",
-                "Thought stream",
-                "Stream my thoughts"
+                "\(.applicationName)",
+                "Stream with \(.applicationName)",
+                "Open \(.applicationName)"
             ],
             shortTitle: "Thought Stream",
             systemImageName: "waveform"
@@ -52,8 +52,8 @@ struct ThoughtStreamShortcuts: AppShortcutsProvider {
             intent: StopThoughtStreamIntent(),
             phrases: [
                 "Stop \(.applicationName)",
-                "Stop thought stream",
-                "End thought stream"
+                "End \(.applicationName)",
+                "Finish \(.applicationName)"
             ],
             shortTitle: "Stop Stream",
             systemImageName: "stop.circle"
