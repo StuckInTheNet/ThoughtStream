@@ -18,7 +18,7 @@
 		0816F3D24621485D7F8EA2F4 /* ShakeDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShakeDetector.swift; sourceTree = "<group>"; };
 		1D4ACD56F093D88416878F12 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2345E877A2397F74E2D4DB4C /* ThoughtStreamApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThoughtStreamApp.swift; sourceTree = "<group>"; };
-		2D39395853B9FE775488843A /* ThoughtStream.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ThoughtStream.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D39395853B9FE775488843A /* ThoughtStream.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ThoughtStream.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53DDDE97256B301ADF18F2F0 /* SpeechRecognitionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionManager.swift; sourceTree = "<group>"; };
 		81D078B2FF80C32E01703226 /* AppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntents.swift; sourceTree = "<group>"; };
 		8DDB25C4C58CB6CD2D31616A /* ThoughtStream.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ThoughtStream.entitlements; sourceTree = "<group>"; };
@@ -84,8 +84,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 5FDF1F12C799C273C72E0CEB /* Build configuration list for PBXProject "ThoughtStream" */;
 			developmentRegion = en;
@@ -248,6 +246,7 @@
 				CODE_SIGN_ENTITLEMENTS = ThoughtStream/ThoughtStream.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NVHF9NV28;
 				INFOPLIST_FILE = ThoughtStream/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -268,6 +267,7 @@
 				CODE_SIGN_ENTITLEMENTS = ThoughtStream/ThoughtStream.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NVHF9NV28;
 				INFOPLIST_FILE = ThoughtStream/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

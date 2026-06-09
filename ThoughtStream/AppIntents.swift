@@ -1,62 +1,10 @@
 import AppIntents
-import SwiftUI
-
-// MARK: - Start Thought Stream
-
-/// Siri trigger: "Hey Siri, thought stream" or "Hey Siri, start thought stream"
-struct StartThoughtStreamIntent: AppIntent {
-    static var title: LocalizedStringResource = "Start Thought Stream"
-    static var description = IntentDescription("Begin continuous speech-to-text capture")
-    static var openAppWhenRun = true
-
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        // Flag for the view to pick up via scenePhase/onAppear
-        UserDefaults.standard.set(true, forKey: "siri_pending_start")
-
-        // Also try directly after a delay (Siri needs time to release the mic)
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2))
-            let manager = SpeechRecognitionManager.shared
-            // Clear flag in case the view already handled it
-            UserDefaults.standard.removeObject(forKey: "siri_pending_start")
-            if !manager.isRecording {
-                await manager.start()
-            }
-        }
-
-        return .result()
-    }
-}
-
-// MARK: - Stop Thought Stream
-
-/// Siri trigger: "Hey Siri, stop thought stream"
-struct StopThoughtStreamIntent: AppIntent {
-    static var title: LocalizedStringResource = "Stop Thought Stream"
-    static var description = IntentDescription("Stop the current thought stream recording")
-    static var openAppWhenRun = true
-
-    @MainActor
-    func perform() async throws -> some IntentResult {
-        UserDefaults.standard.set(true, forKey: "siri_pending_stop")
-
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2))
-            let manager = SpeechRecognitionManager.shared
-            UserDefaults.standard.removeObject(forKey: "siri_pending_stop")
-            if manager.isRecording {
-                manager.stop()
-            }
-        }
-
-        return .result()
-    }
-}
 
 // MARK: - Shortcuts Provider
 
-/// Makes the intents discoverable in the Shortcuts app and Siri suggestions
+/// Makes the app discoverable in Shortcuts and Siri suggestions.
+/// "Hey Siri, open ThoughtStream" works natively via iOS — no custom
+/// intent needed. The app auto-starts recording on launch.
 struct ThoughtStreamShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
@@ -64,22 +12,22 @@ struct ThoughtStreamShortcuts: AppShortcutsProvider {
             phrases: [
                 "Start \(.applicationName)",
                 "\(.applicationName)",
-                "Stream with \(.applicationName)",
                 "Open \(.applicationName)"
             ],
             shortTitle: "Thought Stream",
             systemImageName: "waveform"
         )
-        AppShortcut(
-            intent: StopThoughtStreamIntent(),
-            phrases: [
-                "Stop \(.applicationName)",
-                "End \(.applicationName)",
-                "Finish \(.applicationName)"
-            ],
-            shortTitle: "Stop Stream",
-            systemImageName: "stop.circle"
-        )
     }
 }
 
+// MARK: - Start Intent (opens app — recording auto-starts)
+
+struct StartThoughtStreamIntent: AppIntent {
+    static var title: LocalizedStringResource = "Start Thought Stream"
+    static var description = IntentDescription("Open ThoughtStream and begin recording")
+    static var openAppWhenRun = true
+
+    func perform() async throws -> some IntentResult {
+        return .result()
+    }
+}
