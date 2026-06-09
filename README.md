@@ -2,14 +2,14 @@
   <img src="assets/logo.svg" alt="ThoughtStream" width="280"/>
 </p>
 <p align="center">
-  <strong>Hands-free, continuous speech-to-text for iOS.</strong><br/>
-  Start with Siri, talk as long as you want, get a clean transcript saved automatically.<br/>
-  Built for runners, walkers, and anyone who thinks better out loud.
+  <em>Hands-free, continuous speech-to-text for iOS.</em><br/>
+  <sub>Start with Siri, talk as long as you want, get a clean transcript saved automatically.<br/>
+  Built for runners, walkers, and anyone who thinks better out loud.</sub>
 </p>
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-iOS%2017%2B-blue?style=flat-square" alt="iOS 17+"/>
-  <img src="https://img.shields.io/badge/swift-5.9-orange?style=flat-square" alt="Swift 5.9"/>
-  <img src="https://img.shields.io/github/license/StuckInTheNet/ThoughtStream?style=flat-square" alt="MIT License"/>
+  <a href="#requirements"><img src="https://img.shields.io/badge/platform-iOS%2017%2B-blue?style=flat-square" alt="iOS 17+"/></a>
+  <a href="#setup"><img src="https://img.shields.io/badge/swift-5.9-orange?style=flat-square" alt="Swift 5.9"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/StuckInTheNet/ThoughtStream?style=flat-square" alt="MIT License"/></a>
 </p>
 
 ## Why This Exists
