@@ -17,6 +17,16 @@ targets:
         NSMicrophoneUsageDescription: "ThoughtStream needs microphone access to listen and transcribe your speech."
         UIBackgroundModes:
           - audio
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.mattfisher.ThoughtStream
       MARKETING_VERSION: "1.0.0"
