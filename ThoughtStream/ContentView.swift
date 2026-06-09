@@ -40,6 +40,22 @@ struct ContentView: View {
                 speechManager.stop()
             }
         }
+        .onAppear {
+            // Handle cold launch from Siri — the notification may have
+            // fired before this view existed, so check the shared flag.
+            if SiriLaunchState.shared.pendingStart {
+                SiriLaunchState.shared.pendingStart = false
+                if !speechManager.isRecording {
+                    Task { await speechManager.start() }
+                }
+            }
+            if SiriLaunchState.shared.pendingStop {
+                SiriLaunchState.shared.pendingStop = false
+                if speechManager.isRecording {
+                    speechManager.stop()
+                }
+            }
+        }
         .preferredColorScheme(.dark)
     }
 
