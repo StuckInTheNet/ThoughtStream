@@ -11,10 +11,9 @@ struct StartThoughtStreamIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        let manager = SpeechRecognitionManager.shared
-        if !manager.isRecording {
-            await manager.start()
-        }
+        // Set a persistent flag — the app picks this up when scene becomes
+        // active, after Siri has fully released the audio session.
+        UserDefaults.standard.set(true, forKey: "siri_pending_start")
         return .result()
     }
 }
@@ -29,10 +28,7 @@ struct StopThoughtStreamIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        let manager = SpeechRecognitionManager.shared
-        if manager.isRecording {
-            manager.stop()
-        }
+        UserDefaults.standard.set(true, forKey: "siri_pending_stop")
         return .result()
     }
 }
