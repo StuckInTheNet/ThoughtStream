@@ -35,6 +35,11 @@ struct ContentView: View {
                     .padding(.bottom, 60)
             }
         }
+        .onShake {
+            if speechManager.isRecording {
+                speechManager.stop()
+            }
+        }
         .preferredColorScheme(.dark)
     }
 
@@ -59,6 +64,10 @@ struct ContentView: View {
                             .font(.system(.caption, design: .monospaced))
                             .foregroundColor(.gray)
                     }
+
+                    Text("Shake or tap stop to end")
+                        .font(.caption2)
+                        .foregroundColor(.gray.opacity(0.6))
                 } else {
                     Text("Tap to start streaming")
                         .font(.caption)
