@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var speechManager: SpeechRecognitionManager
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
@@ -39,6 +40,14 @@ struct ContentView: View {
             if speechManager.isRecording {
                 speechManager.stop()
             }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                checkSiriPendingActions()
+            }
+        }
+        .onAppear {
+            checkSiriPendingActions()
         }
         .preferredColorScheme(.dark)
     }
@@ -130,6 +139,29 @@ struct ContentView: View {
             }
         }
         .accessibilityLabel(speechManager.isRecording ? "Stop recording" : "Start recording")
+    }
+
+    // MARK: - Siri Pending Actions
+
+    private func checkSiriPendingActions() {
+        let defaults = UserDefaults.standard
+
+        if defaults.bool(forKey: "siri_pending_start") {
+            defaults.removeObject(forKey: "siri_pending_start")
+            if !speechManager.isRecording {
+                Task {
+                    try? await Task.sleep(for: .seconds(1))
+                    await speechManager.start()
+                }
+            }
+        }
+
+        if defaults.bool(forKey: "siri_pending_stop") {
+            defaults.removeObject(forKey: "siri_pending_stop")
+            if speechManager.isRecording {
+                speechManager.stop()
+            }
+        }
     }
 }
 

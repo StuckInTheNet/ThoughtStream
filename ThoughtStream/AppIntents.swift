@@ -11,9 +11,20 @@ struct StartThoughtStreamIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        // Set a persistent flag — the app picks this up when scene becomes
-        // active, after Siri has fully released the audio session.
+        // Flag for the view to pick up via scenePhase/onAppear
         UserDefaults.standard.set(true, forKey: "siri_pending_start")
+
+        // Also try directly after a delay (Siri needs time to release the mic)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            let manager = SpeechRecognitionManager.shared
+            // Clear flag in case the view already handled it
+            UserDefaults.standard.removeObject(forKey: "siri_pending_start")
+            if !manager.isRecording {
+                await manager.start()
+            }
+        }
+
         return .result()
     }
 }
@@ -29,6 +40,16 @@ struct StopThoughtStreamIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         UserDefaults.standard.set(true, forKey: "siri_pending_stop")
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
+            let manager = SpeechRecognitionManager.shared
+            UserDefaults.standard.removeObject(forKey: "siri_pending_stop")
+            if manager.isRecording {
+                manager.stop()
+            }
+        }
+
         return .result()
     }
 }
