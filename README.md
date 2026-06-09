@@ -3,8 +3,7 @@
 </p>
 <p align="center">
   <em>Hands-free, continuous speech-to-text for iOS.</em><br/>
-  <sub>Start with Siri, talk as long as you want, get a clean transcript saved automatically.<br/>
-  Built for runners, walkers, and anyone who thinks better out loud.</sub>
+  <sub>Start with Siri, talk as long as you want, get a clean transcript saved automatically.</sub>
 </p>
 <p align="center">
   <a href="#requirements"><img src="https://img.shields.io/badge/platform-iOS%2017%2B-blue?style=flat-square" alt="iOS 17+"/></a>
