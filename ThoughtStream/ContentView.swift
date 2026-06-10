@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     @EnvironmentObject var speechManager: SpeechRecognitionManager
@@ -12,6 +13,13 @@ struct ContentView: View {
                 header
                     .padding(.top, 16)
                     .padding(.horizontal, 24)
+
+                // Setup banner (one-time)
+                if !speechManager.isShortcutInstalled {
+                    setupBanner
+                        .padding(.horizontal, 24)
+                        .padding(.top, 12)
+                }
 
                 // Transcript area
                 transcriptArea
@@ -40,6 +48,55 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .overlay(alignment: .top) {
+            if let topic = speechManager.lastSavedTopic {
+                SavedBanner(topic: topic)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation { speechManager.lastSavedTopic = nil }
+                        }
+                    }
+                    .padding(.top, 60)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: speechManager.lastSavedTopic != nil)
+        .sheet(isPresented: $speechManager.showShortcutSetup) {
+            ShortcutSetupView()
+                .environmentObject(speechManager)
+        }
+    }
+
+    // MARK: - Setup Banner
+
+    private var setupBanner: some View {
+        Button {
+            speechManager.showShortcutSetup = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "note.text")
+                    .font(.title3)
+                    .foregroundColor(.yellow)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Enable Notes Saving")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                    Text("One-time setup — takes 30 seconds")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(14)
+            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+        }
     }
 
     // MARK: - Header
@@ -133,6 +190,123 @@ struct ContentView: View {
 
 }
 
+// MARK: - Shortcut Setup View
+
+struct ShortcutSetupView: View {
+    @EnvironmentObject var speechManager: SpeechRecognitionManager
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+
+                        // Hero
+                        VStack(spacing: 8) {
+                            Image(systemName: "note.text.badge.plus")
+                                .font(.system(size: 48))
+                                .foregroundColor(.yellow)
+                            Text("Save to Notes")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Text("Create a simple Shortcut so ThoughtStream can save directly to Apple Notes.")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 8)
+
+                        // Steps
+                        VStack(alignment: .leading, spacing: 20) {
+                            stepRow(number: 1,
+                                    title: "Tap \"Open Shortcuts\" below",
+                                    detail: "This opens the Shortcuts app to create a new shortcut.")
+
+                            stepRow(number: 2,
+                                    title: "Add \"Get Clipboard\"",
+                                    detail: "Search for \"Clipboard\" and add the Get Clipboard action.")
+
+                            stepRow(number: 3,
+                                    title: "Add \"Create Note\"",
+                                    detail: "Search for \"Create Note\" and add it below. It will automatically use the clipboard text.")
+
+                            stepRow(number: 4,
+                                    title: "Rename to \"Save ThoughtStream\"",
+                                    detail: "Tap the name at the top and type exactly: Save ThoughtStream")
+                        }
+                        .padding(.horizontal, 4)
+
+                        // Open Shortcuts button
+                        Button {
+                            speechManager.openShortcutsApp()
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.up.forward.app")
+                                Text("Open Shortcuts")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.yellow, in: RoundedRectangle(cornerRadius: 12))
+                        }
+
+                        // Done button
+                        Button {
+                            speechManager.markShortcutInstalled()
+                            dismiss()
+                        } label: {
+                            Text("I've created the shortcut")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .padding(24)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
+        }
+    }
+
+    private func stepRow(number: Int, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Text("\(number)")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+                .frame(width: 24, height: 24)
+                .background(Color.yellow, in: Circle())
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+}
+
 // MARK: - Pulse Animation
 
 struct PulseModifier: ViewModifier {
@@ -146,7 +320,28 @@ struct PulseModifier: ViewModifier {
     }
 }
 
+// MARK: - Saved Banner
+
+struct SavedBanner: View {
+    let topic: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+            Text("Saved: \(topic)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: Capsule())
+    }
+}
+
 #Preview {
     ContentView()
-        .environmentObject(SpeechRecognitionManager())
+        .environmentObject(SpeechRecognitionManager.shared)
 }

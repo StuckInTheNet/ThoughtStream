@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e94560"/>
+      <stop offset="100%" stop-color="#ff6b6b"/>
+    </linearGradient>
+    <linearGradient id="stream" x1="200" y1="400" x2="840" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e94560" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#ff6b6b" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#ee8959" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background (full square — iOS applies its own mask) -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Outer subtle ring -->
+  <circle cx="512" cy="460" r="280" stroke="#e94560" stroke-opacity="0.15" stroke-width="3" fill="none"/>
+
+  <!-- Sound wave bars (center waveform) -->
+  <g transform="translate(512, 460)">
+    <!-- Center bar -->
+    <rect x="-14" y="-130" width="28" height="260" rx="14" fill="url(#wave)"/>
+    <!-- Inner bars -->
+    <rect x="-78" y="-96" width="28" height="192" rx="14" fill="url(#wave)" opacity="0.9"/>
+    <rect x="50" y="-104" width="28" height="208" rx="14" fill="url(#wave)" opacity="0.9"/>
+    <!-- Mid bars -->
+    <rect x="-142" y="-62" width="28" height="124" rx="14" fill="url(#wave)" opacity="0.7"/>
+    <rect x="114" y="-70" width="28" height="140" rx="14" fill="url(#wave)" opacity="0.7"/>
+    <!-- Outer bars -->
+    <rect x="-206" y="-40" width="28" height="80" rx="14" fill="url(#wave)" opacity="0.5"/>
+    <rect x="178" y="-48" width="28" height="96" rx="14" fill="url(#wave)" opacity="0.5"/>
+    <!-- Far outer bars -->
+    <rect x="-270" y="-22" width="28" height="44" rx="14" fill="url(#wave)" opacity="0.3"/>
+    <rect x="242" y="-26" width="28" height="52" rx="14" fill="url(#wave)" opacity="0.3"/>
+  </g>
+
+  <!-- Flowing stream lines underneath -->
+  <path d="M180 720 Q340 670 512 700 Q684 730 844 680" stroke="url(#stream)" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M220 770 Q380 720 552 750 Q724 780 884 730" stroke="url(#stream)" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M260 810 Q420 770 572 790 Q734 815 894 775" stroke="url(#stream)" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.25"/>
+</svg>

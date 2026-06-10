@@ -1,6 +1,8 @@
 import Foundation
 import Speech
 import AVFoundation
+import NaturalLanguage
+import UIKit
 
 /// Manages continuous speech recognition by chaining recognition requests.
 /// Each Apple recognition request has a ~1 minute limit, so we seamlessly
@@ -17,6 +19,16 @@ final class SpeechRecognitionManager: ObservableObject {
     @Published var liveTranscript = ""
     @Published var error: String?
     @Published var elapsedSeconds: Int = 0
+    @Published var lastSavedTopic: String?
+    @Published var showShortcutSetup = false
+
+    var isShortcutInstalled: Bool {
+        get { UserDefaults.standard.bool(forKey: "shortcutInstalled") }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "shortcutInstalled")
+            objectWillChange.send()
+        }
+    }
 
     // MARK: - Private
 
@@ -34,6 +46,23 @@ final class SpeechRecognitionManager: ObservableObject {
 
     /// Whether we should automatically restart recognition after a segment ends
     private var shouldContinue = false
+
+    /// Whether audio was interrupted (e.g. by Siri) and we need to resume
+    private var wasInterrupted = false
+
+    // MARK: - Init
+
+    private init() {
+        NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor in
+                self?.handleAudioInterruption(notification)
+            }
+        }
+    }
 
     // MARK: - Permissions
 
@@ -111,7 +140,6 @@ final class SpeechRecognitionManager: ObservableObject {
         recognitionRequest = nil
         recognitionTask = nil
 
-        // Save to file
         saveTranscriptToFile()
     }
 
@@ -124,6 +152,38 @@ final class SpeechRecognitionManager: ObservableObject {
             try session.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             self.error = "Audio session error: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Audio Interruption (Siri, phone calls, etc.)
+
+    private func handleAudioInterruption(_ notification: Notification) {
+        guard let info = notification.userInfo,
+              let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+
+        switch type {
+        case .began:
+            // Siri or another app took over audio — save progress, tear down cleanly
+            guard shouldContinue else { return }
+            wasInterrupted = true
+            commitCurrentSegment()
+            audioEngine.stop()
+            audioEngine.inputNode.removeTap(onBus: 0)
+            recognitionRequest?.endAudio()
+            recognitionTask?.cancel()
+            recognitionRequest = nil
+            recognitionTask = nil
+
+        case .ended:
+            // Interruption ended — resume recording if we were mid-stream
+            guard wasInterrupted, shouldContinue else { return }
+            wasInterrupted = false
+            configureAudioSession()
+            startRecognitionSegment()
+
+        @unknown default:
+            break
         }
     }
 
@@ -237,33 +297,143 @@ final class SpeechRecognitionManager: ObservableObject {
         }
     }
 
+    // MARK: - Topic Detection
+
+    private func detectTopic(from text: String) -> String {
+        // Words to ignore — common but not topical
+        let stopNouns: Set<String> = [
+            "thing", "things", "way", "ways", "time", "times", "people",
+            "part", "lot", "kind", "stuff", "point", "something", "anything",
+            "everything", "nothing", "place", "fact", "idea", "question",
+            "problem", "number", "case", "word", "words", "example"
+        ]
+
+        var nounCounts: [String: Int] = [:]
+
+        // First pass: find named entities (people, places, organizations)
+        // These are weighted higher since they're almost always topical
+        let nameTagger = NLTagger(tagSchemes: [.nameType])
+        nameTagger.string = text
+        let nameTypes: Set<NLTag> = [.personalName, .placeName, .organizationName]
+
+        nameTagger.enumerateTags(
+            in: text.startIndex..<text.endIndex,
+            unit: .word,
+            scheme: .nameType
+        ) { tag, range in
+            if let tag = tag, nameTypes.contains(tag) {
+                let word = String(text[range])
+                if word.count > 2 {
+                    nounCounts[word, default: 0] += 3
+                }
+            }
+            return true
+        }
+
+        // Second pass: find regular nouns via lexical class
+        let lexTagger = NLTagger(tagSchemes: [.lexicalClass])
+        lexTagger.string = text
+
+        lexTagger.enumerateTags(
+            in: text.startIndex..<text.endIndex,
+            unit: .word,
+            scheme: .lexicalClass
+        ) { tag, range in
+            if let tag = tag, tag == .noun {
+                let word = String(text[range])
+                let lower = word.lowercased()
+
+                // Skip short words and stop nouns
+                guard lower.count > 2, !stopNouns.contains(lower) else { return true }
+
+                nounCounts[lower, default: 0] += 1
+            }
+            return true
+        }
+
+        let topNouns = nounCounts
+            .sorted { $0.value > $1.value }
+            .prefix(3)
+            .map { $0.key.capitalized }
+
+        guard !topNouns.isEmpty else { return "Thought Stream" }
+
+        if topNouns.count == 1 {
+            return topNouns[0]
+        }
+        // "Architecture, Services & Latency"
+        return topNouns.dropLast().joined(separator: ", ") + " & " + topNouns.last!
+    }
+
     // MARK: - Persistence
 
-    func saveTranscriptToFile() {
+    private static let shortcutName = "Save ThoughtStream"
+
+    private func saveTranscriptToFile() {
         let text = liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+
+        let topic = detectTopic(from: text)
+        lastSavedTopic = topic
 
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         let timestamp = formatter.string(from: Date())
-
         let durationFormatted = formatDuration(elapsedSeconds)
 
         let content = """
-        # Thought Stream — \(timestamp)
-        Duration: \(durationFormatted)
+        \(topic)
+        \(timestamp) · \(durationFormatted)
 
         \(text)
         """
 
-        // Save to Documents directory
+        // Save to Notes via Shortcuts
+        saveToNotes(content)
+
+        // Also save to Documents as backup
+        let safeTopic = topic
+            .components(separatedBy: CharacterSet.alphanumerics.union(.whitespaces).inverted)
+            .joined()
+            .replacingOccurrences(of: " ", with: "-")
+            .lowercased()
+            .prefix(50)
+
         if let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
             let dir = docs.appendingPathComponent("ThoughtStreams")
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
-            let file = dir.appendingPathComponent("stream_\(timestamp).md")
+            let filename = "\(safeTopic)_\(timestamp).md"
+            let file = dir.appendingPathComponent(filename)
             try? content.write(to: file, atomically: true, encoding: .utf8)
         }
+    }
+
+    private func saveToNotes(_ content: String) {
+        // Copy transcript to clipboard for the Shortcut to read
+        UIPasteboard.general.string = content
+
+        // Invoke the "Save ThoughtStream" shortcut, which creates a note
+        // and returns to the app via x-callback-url
+        let name = Self.shortcutName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
+        let urlString = "shortcuts://x-callback-url/run-shortcut?name=\(name)&input=clipboard&x-success=thoughtstream://"
+
+        if let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    // MARK: - Shortcut Setup
+
+    func openShortcutsApp() {
+        if let url = URL(string: "shortcuts://create-shortcut") {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    func markShortcutInstalled() {
+        isShortcutInstalled = true
+        showShortcutSetup = false
     }
 
     func formatDuration(_ seconds: Int) -> String {
