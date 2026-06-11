@@ -13,7 +13,7 @@ struct ThoughtStreamApp: App {
                     if newPhase == .active && !speechManager.isRecording {
                         Task {
                             try? await Task.sleep(for: .milliseconds(500))
-                            await speechManager.start()
+                            await speechManager.resume()
                         }
                     }
                 }

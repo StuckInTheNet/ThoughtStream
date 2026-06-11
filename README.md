@@ -20,7 +20,8 @@ Apple's built-in dictation times out after ~30 seconds of silence. Voice Memos r
 - **Unlimited Duration** — Seamlessly chains recognition requests so you can talk for seconds, minutes, or hours
 - **Live Transcript** — See your words appear in real time as you speak
 - **On-Device Processing** — Uses Apple's on-device speech recognition when available (no data leaves your phone)
-- **Auto-Save** — Transcripts saved as timestamped Markdown files to your Documents folder
+- **Topic Detection** — Automatically detects what you were talking about and titles the note
+- **Save to Notes** — Transcripts saved directly to Apple Notes via Shortcuts integration
 - **Background Audio** — Keeps listening even when the screen locks
 - **Shake to Stop** — Shake your phone to end a stream, or tap the stop button
 - **Minimal UI** — Dark interface with a single large button, designed for glanceable use while moving
@@ -45,20 +46,27 @@ Two options:
 - **Shake your phone** — hands-free, works while running
 - **Tap the stop button** (the red square) on screen
 
-Your transcript is automatically saved to:
+Your transcript is automatically saved to **Apple Notes** with a detected topic title. A backup is also saved to `Documents/ThoughtStreams/` in the Files app.
+
+Each note looks like:
 ```
-Documents/ThoughtStreams/stream_2026-06-09_14-30-00.md
-```
-Each file looks like:
-```markdown
-# Thought Stream — 2026-06-09_14-30-00
-Duration: 12:34
+Architecture, Services & Latency
+2026-06-09_14-30-00 · 12:34
 
 I was thinking about the architecture for the new feature and I think
 we should probably go with a pub-sub model instead of direct calls
 because the latency requirements aren't that strict and it would
 decouple the services nicely...
 ```
+
+### One-Time Setup
+ThoughtStream saves to Notes via a simple Shortcut. On first launch, the app guides you through a 30-second setup:
+1. Open the Shortcuts app
+2. Add **Get Clipboard** action
+3. Add **Create Note** action
+4. Name it **Save ThoughtStream**
+
+After that, every recording is saved to Notes automatically.
 
 ## Technical Details
 
@@ -68,18 +76,18 @@ Apple's `SFSpeechRecognitionTask` has a soft limit of ~60 seconds per request. T
 ### Architecture
 ```
 ThoughtStreamApp.swift          App entry point
-ContentView.swift               Minimal dark UI — transcript + record button
-SpeechRecognitionManager.swift  Core engine — audio capture, chaining, persistence
+ContentView.swift               Minimal dark UI — transcript + record button + setup flow
+SpeechRecognitionManager.swift  Core engine — audio capture, chaining, topic detection, Notes saving
 AppIntents.swift                Siri phrases and Shortcuts integration
-SiriObserver.swift              Bridges Siri intents to speech manager
 ShakeDetector.swift             Shake-to-stop via UIWindow motion events
 ```
 
 ### Key Implementation Choices
 - **On-device recognition preferred** — Faster response, works without network, private. Falls back to server-based recognition when on-device isn't available.
 - **`AVAudioSession.Category.record`** — Enables background audio so the app keeps listening with the screen locked.
-- **Notification-based Siri bridge** — App Intents post notifications that the `SiriObserver` modifier picks up, keeping the speech manager decoupled from Siri-specific code.
-- **Markdown output** — Saved transcripts include a timestamp header and duration, making them easy to search and organize.
+- **Audio interruption recovery** — Handles Siri/phone call interruptions gracefully, resuming recording when the mic is available again.
+- **NLP topic detection** — Uses `NLTagger` with named entity recognition and lexical classification to extract the dominant topic from the transcript.
+- **Notes via Shortcuts** — Copies transcript to clipboard and invokes a user-created Shortcut to save to Apple Notes, with `x-callback-url` to return to the app.
 
 ## Requirements
 - iOS 17.0+
@@ -132,11 +140,11 @@ These phrases are registered automatically:
 You can also find and customize these in the **Shortcuts** app.
 
 ## File Storage
-Transcripts are saved to:
+Transcripts are saved to **Apple Notes** (via Shortcuts) and backed up to:
 ```
-[App Documents]/ThoughtStreams/stream_[timestamp].md
+[App Documents]/ThoughtStreams/[topic]_[timestamp].md
 ```
-Access them via the **Files** app on iOS under ThoughtStream's documents, or sync them with iCloud Drive.
+Backup files are accessible via the **Files** app on iOS under ThoughtStream's documents.
 
 ## License
 MIT — see [LICENSE](LICENSE) for details.

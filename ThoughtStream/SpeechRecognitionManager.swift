@@ -50,6 +50,12 @@ final class SpeechRecognitionManager: ObservableObject {
     /// Whether audio was interrupted (e.g. by Siri) and we need to resume
     private var wasInterrupted = false
 
+    /// Consecutive restart failures — used for exponential backoff
+    private var restartFailures = 0
+
+    /// Incremented each time a new segment starts — used to ignore stale callbacks
+    private var segmentID = 0
+
     // MARK: - Init
 
     private init() {
@@ -97,8 +103,9 @@ final class SpeechRecognitionManager: ObservableObject {
         return true
     }
 
-    // MARK: - Start / Stop
+    // MARK: - Start / Stop / Resume
 
+    /// Start a brand-new recording session (clears all previous transcript data)
     func start() async {
         guard !isRecording else { return }
 
@@ -112,14 +119,32 @@ final class SpeechRecognitionManager: ObservableObject {
         error = nil
         shouldContinue = true
         isRecording = true
+        restartFailures = 0
 
-        // Start elapsed time timer
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.elapsedSeconds += 1
-            }
+        startTimer()
+        configureAudioSession()
+        startRecognitionSegment()
+    }
+
+    /// Resume an interrupted session WITHOUT clearing the transcript.
+    /// Used when the app returns from background or recovers from an interruption.
+    func resume() async {
+        guard !isRecording else { return }
+        guard !savedTranscript.isEmpty || !currentSegmentText.isEmpty else {
+            // Nothing to resume — start fresh
+            await start()
+            return
         }
 
+        let permitted = await requestPermissions()
+        guard permitted else { return }
+
+        error = nil
+        shouldContinue = true
+        isRecording = true
+        restartFailures = 0
+
+        startTimer()
         configureAudioSession()
         startRecognitionSegment()
     }
@@ -141,6 +166,15 @@ final class SpeechRecognitionManager: ObservableObject {
         recognitionTask = nil
 
         saveTranscriptToFile()
+    }
+
+    private func startTimer() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.elapsedSeconds += 1
+            }
+        }
     }
 
     // MARK: - Audio Session
@@ -194,16 +228,19 @@ final class SpeechRecognitionManager: ObservableObject {
     private func startRecognitionSegment() {
         guard shouldContinue else { return }
 
+        segmentID += 1
+        let thisSegment = segmentID
         currentSegmentText = ""
 
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         request.addsPunctuation = true
 
-        // If on-device recognition is available, prefer it (faster, no network needed)
-        if speechRecognizer.supportsOnDeviceRecognition {
-            request.requiresOnDeviceRecognition = true
-        }
+        // NOTE: Do NOT set requiresOnDeviceRecognition = true.
+        // There is a confirmed Apple bug where on-device recognition
+        // discards all text before a speaking pause (~1.5s of silence).
+        // With this set to false, iOS still prefers on-device recognition
+        // when available, but the text-discard bug does not trigger.
 
         self.recognitionRequest = request
 
@@ -211,29 +248,25 @@ final class SpeechRecognitionManager: ObservableObject {
             Task { @MainActor in
                 guard let self = self else { return }
 
+                // Ignore callbacks from a previous segment
+                guard thisSegment == self.segmentID else { return }
+
                 if let result = result {
+                    // Got speech — reset backoff counter
+                    self.restartFailures = 0
                     self.currentSegmentText = result.bestTranscription.formattedString
                     self.liveTranscript = self.buildFullTranscript()
 
-                    // If this result is final, the segment ended — chain a new one
                     if result.isFinal {
                         self.commitCurrentSegment()
                         self.restartRecognitionSegment()
                     }
-                }
-
-                if let error = error {
-                    let nsError = error as NSError
-
-                    // Error 216 = no speech detected, 1110 = request timeout
-                    // These are normal — just restart
-                    let recoverableCodes = [216, 1110]
-                    if recoverableCodes.contains(nsError.code) {
-                        self.commitCurrentSegment()
+                } else if let error = error {
+                    // Only handle error if there was no result (avoid double-fire)
+                    self.restartFailures += 1
+                    self.commitCurrentSegment()
+                    if self.shouldContinue {
                         self.restartRecognitionSegment()
-                    } else if self.shouldContinue {
-                        self.error = error.localizedDescription
-                        self.stop()
                     }
                 }
             }
@@ -266,8 +299,16 @@ final class SpeechRecognitionManager: ObservableObject {
 
         guard shouldContinue else { return }
 
-        // Small delay to let the previous task fully clean up
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Exponential backoff: 0.3s, 0.6s, 1.2s, 2.4s... up to 10s
+        let baseDelay = 0.3
+        let delay = min(baseDelay * pow(2.0, Double(restartFailures)), 10.0)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard self.shouldContinue else { return }
+            // Reconfigure audio session in case iOS deactivated it
+            if !self.audioEngine.isRunning {
+                self.configureAudioSession()
+            }
             self.startRecognitionSegment()
         }
     }
